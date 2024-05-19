@@ -4,7 +4,10 @@
 #define RADIUS 2
 #define TILE_WIDTH (TILE_SIZE + 2 * RADIUS)
 
+
+
 __constant__ float d_filters[3][25]; 
+
 
 
 void initializeFilters() {
@@ -73,10 +76,11 @@ void execute_jobs_cpu(PROCESSING_JOB **jobs)
   }
 }
 
-
 __global__ void PictureDevice_FILTER(png_byte *d_In, png_byte *d_Out, int height, int width, int filterIndex) {
-    __shared__ float tile[TILE_WIDTH][TILE_WIDTH][3]; // Shared memory for the tile (including the halo)
+    __shared__ float tile[TILE_WIDTH][TILE_WIDTH][3]; 
     
+
+
     int Col = blockIdx.x * TILE_SIZE + threadIdx.x - RADIUS;
     int Row = blockIdx.y * TILE_SIZE + threadIdx.y - RADIUS;
 
@@ -86,7 +90,7 @@ __global__ void PictureDevice_FILTER(png_byte *d_In, png_byte *d_Out, int height
         }
     } else {
         for (int color = 0; color < 3; color++) {
-            tile[threadIdx.y][threadIdx.x][color] = 0.0f; // Handle border cases by setting them to 0
+            tile[threadIdx.y][threadIdx.x][color] = 0.0f; 
         }
     }
     __syncthreads();
@@ -115,7 +119,6 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
     png_byte *d_In = nullptr, *d_Out = nullptr;
     size_t maxNumPixels = 0;
 
-    // Determine the maximum number of pixels to allocate memory once
     while (jobs[count] != NULL) {
         size_t numPixels = jobs[count]->height * jobs[count]->width * 3; // 3 for RGB channels
         if (numPixels > maxNumPixels) {
@@ -124,11 +127,11 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
         count++;
     }
 
-    // Allocate memory on the device
+
     cudaMalloc((void **)&d_In, maxNumPixels * sizeof(png_byte));
     cudaMalloc((void **)&d_Out, maxNumPixels * sizeof(png_byte));
 
-    // Initialize filters once
+
     initializeFilters();
 
     count = 0;
@@ -137,9 +140,9 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
     do {
         printf("Processing job: %s -> %s -> %s\n", jobs[count]->source_name, getStrAlgoFilterByType(jobs[count]->processing_algo), jobs[count]->dest_name);
 
-        size_t numPixels = jobs[count]->height * jobs[count]->width * 3; // 3 for RGB channels
+        size_t numPixels = jobs[count]->height * jobs[count]->width * 3; 
 
-        // Check if the previous image is the same as the current image
+
         if (previous_source_name == nullptr || strcmp(previous_source_name, jobs[count]->source_name) != 0) {
             cudaMemcpy(d_In, jobs[count]->source_raw, numPixels * sizeof(png_byte), cudaMemcpyHostToDevice);
             previous_source_name = jobs[count]->source_name;
@@ -148,17 +151,16 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
         dim3 blocks((jobs[count]->width + TILE_SIZE - 1) / TILE_SIZE, (jobs[count]->height + TILE_SIZE - 1) / TILE_SIZE);
         dim3 threads(TILE_WIDTH, TILE_WIDTH);
 
-        // Launch the kernel with filter index
-        int filterIndex = jobs[count]->processing_algo; // Assuming the enum values match the filter array index
+
+        int filterIndex = jobs[count]->processing_algo; 
         PictureDevice_FILTER<<<blocks, threads>>>(d_In, d_Out, jobs[count]->height, jobs[count]->width, filterIndex);
 
-        // Copy result back to host
+
         cudaMemcpy(jobs[count]->dest_raw, d_Out, numPixels * sizeof(png_byte), cudaMemcpyDeviceToHost);
 
         count++;
     } while (jobs[count] != NULL);
 
-    // Free device memory
     cudaFree(d_In);
     cudaFree(d_Out);
 }

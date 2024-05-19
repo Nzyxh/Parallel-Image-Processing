@@ -4,6 +4,9 @@ __global__ void dummyKernel() {
     // Empty kernel that does nothing
 }
 
+// run empty cuda kernel to activate gpu and avoid overhead that comes with 
+// turning on the gpu when processing images
+
 void activateGPU() {
     dummyKernel<<<1, 1>>>();
     cudaDeviceSynchronize();
