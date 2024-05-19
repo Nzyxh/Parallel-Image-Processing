@@ -1,8 +1,15 @@
 #include "header.h"
 
+//tile size is the size of the chunk of the image that each block of threads will process
+// tile width is the size of the chunk including the padding required by the filter (RADIUS) 
+//on each side of the tile 
+
 #define TILE_SIZE 16
 #define RADIUS 2
 #define TILE_WIDTH (TILE_SIZE + 2 * RADIUS)
+
+// the radius here determines how many pixels we need to consider on each side of the pixel
+// which we are currently processing in order to apply the filter to it correctly
 
 // to add padding to the image, we need to add 2 pixels on each side
 
