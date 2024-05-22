@@ -1,6 +1,6 @@
 #include "header.h"
 
-#define TILE_SIZE 16
+#define TILE_SIZE 28
 #define RADIUS 2
 #define TILE_WIDTH (TILE_SIZE + 2 * RADIUS)
 
@@ -120,7 +120,7 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
     size_t maxNumPixels = 0;
 
     while (jobs[count] != NULL) {
-        size_t numPixels = jobs[count]->height * jobs[count]->width * 3; // 3 for RGB channels
+        size_t numPixels = jobs[count]->height * jobs[count]->width * 3; 
         if (numPixels > maxNumPixels) {
             maxNumPixels = numPixels;
         }
@@ -164,3 +164,4 @@ void execute_jobs_gpu(PROCESSING_JOB **jobs) {
     cudaFree(d_In);
     cudaFree(d_Out);
 }
+
